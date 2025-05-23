@@ -16,7 +16,6 @@ var (
 func GetUserState(user string) (*models.UserState, bool) {
 	mutex.Lock()
 	defer mutex.Unlock()
-
 	state, exists := userStates[user]
 	return state, exists
 }
@@ -25,7 +24,6 @@ func GetUserState(user string) (*models.UserState, bool) {
 func SaveUserState(user string, state *models.UserState) {
 	mutex.Lock()
 	defer mutex.Unlock()
-
 	userStates[user] = state
 	fmt.Printf(user)
 }

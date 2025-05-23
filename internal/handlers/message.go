@@ -6,8 +6,18 @@ import (
 	"net/http"
 	"net/url"
 
+	"github.com/samezzz/hyperchat/internal/models"
+	"github.com/samezzz/hyperchat/internal/repository"
 	"github.com/samezzz/hyperchat/internal/services"
 )
+
+type AIResponse struct {
+	Choices []struct {
+		Message struct {
+			Content string `json:"content"`
+		} `json:"message"`
+	} `json:"choices"`
+}
 
 func MessageHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
@@ -32,10 +42,27 @@ func MessageHandler(w http.ResponseWriter, r *http.Request) {
 	from := values.Get("From")
 	messageBody := values.Get("Body")
 
-	fmt.Println("Extracted Body String:", bodyString)
+	// Log extracted message
 	fmt.Println("Extracted Message From:", from)
 	fmt.Println("Extracted Message Body:", messageBody)
 
-	response := services.HandleUserResponse(from, messageBody)
-	fmt.Fprintf(w, response)
+	// Check if user exists in the repository
+	userState, exists := repository.GetUserState(from)
+	if !exists {
+		// First-time user, initiate onboarding flow
+		userState = models.NewUserState()
+		repository.SaveUserState(from, userState)
+
+		// Send welcome message and onboarding instructions
+		services.SendContentTemplate("HX3167e0909369dbe82b39866dbb0a1d76")
+		return
+	}
+
+	// Route based on user state
+	if userState.Onboarding {
+		HandleOnboarding(from, messageBody, userState)
+	} else {
+		// If onboarding is done, route to features
+		HandleChatbotFeatures(from, messageBody)
+	}
 }
