@@ -91,7 +91,7 @@ func handleBloodPressureLogging(from, messageBody string, userState *models.User
 	} else {
 		// Process the blood pressure reading
 		services.SendMessage(from, "Thank you for logging your blood pressure.")
-		response, err := services.GenerateResponse("Hey gpt, this is my blood pressure reading, " + messageBody + ". I want you to give me a brief advice on what to do with a blood pressure like this. Don't talk much. Just give me tips on how to manage blood pressure like this")
+		response, err := services.GenerateResponse("Hey gpt, this is my blood pressure reading, " + messageBody + ". I want you to give me a brief advice on what to do with a blood pressure like this. Don't talk much. I really don't want you to generate more than 5 lines. Just give me tips on how to manage blood pressure like this")
 		if err != nil {
 			log.Printf("Error generating response: %v", err)
 			services.SendMessage(from, "Sorry, I encountered an error. Please try again.")
@@ -170,7 +170,7 @@ func handleChatbot(from, messageBody string) {
 	}
 
 	// Generate the chatbot response
-	response, err := services.GenerateResponse("Hey gpt, you're a specialist in hypertension management. I have a question for you about hypertension. Don't talk much. Just tell me what's necessary. Provide concise, clear, and evidence-based answers about the question I have for you. Focus on key points such as diagnosis, lifestyle changes, medications, monitorthe question I have for you Keep responses brief and easy to understand. I really don't want you to generate more than 5 lines. Now wait for me to ask my question. " + messageBody)
+	response, err := services.GenerateResponse("Hey gpt, you're a specialist in hypertension management. I have a question for you about hypertension. Don't talk much. Just tell me what's necessary. Provide concise, clear, and evidence-based answers about the question I have for you. Focus on key points such as diagnosis, lifestyle changes, medications, monitorthe question I have for you Keep responses brief and easy to understand. I really don't want you to generate more than 5 lines. Now wait for me to ask my question. Always thing deeply for insights you can share. Your responses should be unique. " + messageBody)
 	if err != nil {
 		log.Printf("Error generating response: %v", err)
 		services.SendMessage(from, "Sorry, I encountered an error. Please try again.")
