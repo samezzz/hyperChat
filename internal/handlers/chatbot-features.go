@@ -121,7 +121,7 @@ func handleBloodPressureLogging(from, messageBody string, userState *models.User
 // HEALTH TIPS
 func handleHealthTips(from string, userState *models.UserState) {
 	// Generate the chatbot response from the service
-	response, err := services.GenerateResponse("Hey gpt, I want you to provide some health tips to manage hypertension. So if you're to be a medical health practitioner with tons of experience, how would you summarize some health tips that would benefit me if I want to manage hypertension. Don't talk much. Just tell me what's necessary.")
+	response, err := services.GenerateResponse("Hey gpt, I want you to provide some health tips to manage hypertension. So if you're to be a medical health practitioner with tons of experience, how would you summarize some health tips that would benefit me if I want to manage hypertension. This is a WhatsApp message so the reader doesn't want any long talk. Don't talk much. Just tell me what's necessary.")
 	if err != nil {
 		log.Printf("Error generating response: %v", err)
 		services.SendMessage(from, "Sorry, I encountered an error. Please try again.")
