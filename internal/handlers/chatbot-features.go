@@ -210,12 +210,24 @@ func handleChatbot(from, messageBody string) {
 
 // CHECK BLOOD PRESSURE
 func handleCheckBloodPressure(from, messageBody string, userState *models.UserState) {
-	deepLink := "myapp://open/check-blood-pressure"
+	// Your app package: com.samess.hyperchat_app
+	// Using "hyperchat" as the deep link scheme
+
+	// Primary deep link for your Flutter app
+	deepLink := "hyperchat://open"
+
+	// Intent URL as backup (works better on Android)
+	intentLink := "intent://open#Intent;scheme=hyperchat;package=com.samess.hyperchat_app;S.browser_fallback_url=https%3A%2F%2Fhyperchat.up.railway.app%2F;end"
+
+	// Fallback download link
 	fallbackLink := "https://hyperchat.up.railway.app/"
 
 	msg := fmt.Sprintf(
-		"Tap here to open the blood pressure checker:\n%s\n\nIf you don't have the app installed, download it here:\n%s",
-		deepLink, fallbackLink,
+		"🩺 *Blood Pressure Checker*\n\n"+
+			"Tap here to open the app:\n%s\n\n"+
+			"Alternative link:\n%s\n\n"+
+			"📱 Don't have the app? Download it here:\n%s",
+		deepLink, intentLink, fallbackLink,
 	)
 
 	if err := services.SendMessage(from, msg); err != nil {
