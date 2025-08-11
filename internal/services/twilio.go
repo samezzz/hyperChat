@@ -3,17 +3,45 @@ package services
 import (
 	"fmt"
 	"os"
+	"strings"
+	"unicode"
 
 	"github.com/twilio/twilio-go"
 	api "github.com/twilio/twilio-go/rest/api/v2010"
 )
 
+func cleanNumber(num string) string {
+	// Remove all spaces
+	num = strings.ReplaceAll(num, " ", "")
+
+	// Remove any non-printable characters
+	num = strings.Map(func(r rune) rune {
+		if unicode.IsPrint(r) {
+			return r
+		}
+		return -1
+	}, num)
+
+	// If it already starts with whatsapp:, assume it's already in E.164
+	if strings.HasPrefix(num, "whatsapp:") {
+		return num
+	}
+
+	// Otherwise, ensure it starts with +
+	if !strings.HasPrefix(num, "+") {
+		num = "+" + num
+	}
+
+	// Then prepend whatsapp:
+	return "whatsapp:" + num
+}
+
 func SendMessage(to string, body string) error {
 	client := twilio.NewRestClient()
-
 	params := &api.CreateMessageParams{}
-	params.SetFrom("whatsapp:+14155238886") // Twilio WhatsApp Sandbox number
-	params.SetTo("whatsapp:+233553865162")
+
+	params.SetFrom("whatsapp:+14155238886") // Twilio Sandbox number
+	params.SetTo(cleanNumber(to))
 	params.SetBody(body)
 
 	resp, err := client.Api.CreateMessage(params)
@@ -22,7 +50,7 @@ func SendMessage(to string, body string) error {
 	}
 
 	if resp.Body != nil {
-		fmt.Println("Message sent: ", *resp.Body)
+		fmt.Println("Message sent:", *resp.Body)
 	} else {
 		fmt.Println("Message sent but no response body")
 	}
@@ -30,12 +58,12 @@ func SendMessage(to string, body string) error {
 	return nil
 }
 
-func SendContentTemplate(sid string) error {
+func SendContentTemplate(to string, sid string) error {
 	client := twilio.NewRestClient()
 
 	params := &api.CreateMessageParams{}
 	params.SetContentSid(sid)
-	params.SetTo("whatsapp:+233553865162")
+	params.SetTo(cleanNumber(to))
 	params.SetFrom("whatsapp:+14155238886")
 
 	resp, err := client.Api.CreateMessage(params)

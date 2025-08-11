@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"strings"
 
@@ -31,7 +32,7 @@ func HandleChatbotFeatures(from, messageBody string) {
 			userState.CurrentFeature = feature
 			repository.SaveUserState(from, userState)
 		} else {
-			showFeatureMenu()
+			showFeatureMenu(from)
 			return
 		}
 	}
@@ -209,8 +210,17 @@ func handleChatbot(from, messageBody string) {
 
 // CHECK BLOOD PRESSURE
 func handleCheckBloodPressure(from, messageBody string, userState *models.UserState) {
-	services.SendMessage(from, "Click on the link below to Check your blood pressure")
-	services.SendMessage(from, "http://localhost:3000/check-bp")
+	deepLink := "myapp://open/check-blood-pressure"
+	fallbackLink := "https://hyperchat.up.railway.app/"
+
+	msg := fmt.Sprintf(
+		"Tap here to open the blood pressure checker:\n%s\n\nIf you don't have the app installed, download it here:\n%s",
+		deepLink, fallbackLink,
+	)
+
+	if err := services.SendMessage(from, msg); err != nil {
+		log.Printf("Error sending check BP message: %v", err)
+	}
 	resetUserState(from, userState)
 }
 
@@ -219,7 +229,8 @@ func handleMultilanguage(from, messageBody string, userState *models.UserState) 
 	// Check if the user has already selected a language
 	if userState.LanguageSelected == "" && userState.LanguageStage == 0 {
 		// Show the language selection menu
-		services.SendContentTemplate("HX5be2530d319980d8f9874136ead15eda")
+		fromNumber := strings.TrimPrefix(from, "whatsapp:")
+		services.SendContentTemplate(fromNumber, "HX5be2530d319980d8f9874136ead15eda")
 		userState.LanguageStage = 1
 		repository.SaveUserState(from, userState)
 		return
@@ -274,9 +285,10 @@ func resetUserState(from string, userState *models.UserState) {
 	userState.BPLogStage = 0
 	userState.ReminderStage = 0
 	repository.SaveUserState(from, userState)
-	showFeatureMenu()
+	showFeatureMenu(from)
 }
 
-func showFeatureMenu() {
-	services.SendContentTemplate("HXb2182414459a8e5987e913308b3cbc1e")
+func showFeatureMenu(from string) {
+	fromNumber := strings.TrimPrefix(from, "whatsapp:")
+	services.SendContentTemplate(fromNumber, "HXb2182414459a8e5987e913308b3cbc1e")
 }

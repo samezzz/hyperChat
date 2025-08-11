@@ -5,6 +5,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strings"
 
 	"github.com/samezzz/hyperchat/internal/models"
 	"github.com/samezzz/hyperchat/internal/repository"
@@ -54,7 +55,8 @@ func MessageHandler(w http.ResponseWriter, r *http.Request) {
 		repository.SaveUserState(from, userState)
 
 		// Send welcome message and onboarding instructions
-		services.SendContentTemplate("HX3167e0909369dbe82b39866dbb0a1d76")
+		fromNumber := strings.TrimPrefix(from, "whatsapp:")
+		services.SendContentTemplate(fromNumber, "HX3167e0909369dbe82b39866dbb0a1d76")
 		return
 	}
 

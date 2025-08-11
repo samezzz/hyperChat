@@ -52,12 +52,12 @@ func completeOnboarding(from string, userState *models.UserState) {
 	userState.FeatureSelected = false
 	repository.SaveUserState(from, userState)
 	services.SendMessage(from, "Thank you for completing the onboarding process. You can now start using the features of the app!")
-	showFeatureMenu()
+	showFeatureMenu(from)
 }
 
 func skipOnboarding(from string, userState *models.UserState) {
 	userState.Onboarding = false
 	userState.FeatureSelected = false
 	repository.SaveUserState(from, userState)
-	showFeatureMenu()
+	showFeatureMenu(from)
 }
