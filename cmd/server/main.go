@@ -5,10 +5,9 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"os/signal"
 
 	"github.com/samezzz/hyperchat/internal/handlers"
-
-	"os/signal"
 )
 
 func main() {
@@ -41,10 +40,3 @@ func main() {
 
 	log.Println("Server exiting")
 }
-
-// func main() {
-// 	http.HandleFunc("/send-message", handlers.MessageHandler)
-//
-// 	log.Println("Server is running on port 8080...")
-// 	log.Fatal(http.ListenAndServe(":8080", nil))
-// }
