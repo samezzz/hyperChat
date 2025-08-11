@@ -91,7 +91,7 @@ func SendContentTemplate(to string, sid string) error {
 }
 
 func ReviewTemplate(sid string) {
-	client := twilio.NewRestClient()
+	client := newTwilioClient()
 
 	resp, err := client.ContentV1.FetchContent(sid)
 	if err != nil {
