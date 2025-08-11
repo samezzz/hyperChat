@@ -121,7 +121,7 @@ func handleBloodPressureLogging(from, messageBody string, userState *models.User
 // HEALTH TIPS
 func handleHealthTips(from string, userState *models.UserState) {
 	// Generate the chatbot response from the service
-	response, err := services.GenerateResponse("Hey gpt, I want you to provide some health tips to manage hypertension. So if you're to be a medical health practitioner with tons of experience, how would you summarize some health tips that would benefit me if I want to manage hypertension. This is a WhatsApp message so the reader doesn't want any long talk. Don't talk much. Just tell me what's necessary. I really don't want you to generate more than 10 lines. Provide concise, clear, and evidence-based answers about hypertension management. Focus on key points such as diagnosis, lifestyle changes, medications, monitoring, and complications. Keep responses brief and easy to understand.")
+	response, err := services.GenerateResponse("Hey gpt, I want you to provide some health tips to manage hypertension. So if you're to be a medical health practitioner with tons of experience, how would you summarize some health tips that would benefit me if I want to manage hypertension. This is a WhatsApp message so the reader doesn't want any long talk. Don't talk much. Just tell me what's necessary. I really don't want you to generate more than 5 lines. Provide concise, clear, and evidence-based answers about hypertension management. Focus on key points such as diagnosis, lifestyle changes, medications, monitoring, and complications. Keep responses brief and easy to understand.")
 	if err != nil {
 		log.Printf("Error generating response: %v", err)
 		services.SendMessage(from, "Sorry, I encountered an error. Please try again.")
@@ -170,7 +170,7 @@ func handleChatbot(from, messageBody string) {
 	}
 
 	// Generate the chatbot response
-	response, err := services.GenerateResponse("Hey gpt, you're a specialist in hypertension management. I have a question for you about hypertension. Don't talk much. Just tell me what's necessary. Provide concise, clear, and evidence-based answers about hypertension management. Focus on key points such as diagnosis, lifestyle changes, medications, monitoring, and complications. Keep responses brief and easy to understand. I really don't want you to generate more than 10 lines." + messageBody)
+	response, err := services.GenerateResponse("Hey gpt, you're a specialist in hypertension management. I have a question for you about hypertension. Don't talk much. Just tell me what's necessary. Provide concise, clear, and evidence-based answers about the question I have for you. Focus on key points such as diagnosis, lifestyle changes, medications, monitorthe question I have for you Keep responses brief and easy to understand. I really don't want you to generate more than 5 lines. Now wait for me to ask my question. " + messageBody)
 	if err != nil {
 		log.Printf("Error generating response: %v", err)
 		services.SendMessage(from, "Sorry, I encountered an error. Please try again.")
