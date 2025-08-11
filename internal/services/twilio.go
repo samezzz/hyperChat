@@ -36,8 +36,15 @@ func cleanNumber(num string) string {
 	return "whatsapp:" + num
 }
 
+func newTwilioClient() *twilio.RestClient {
+	return twilio.NewRestClientWithParams(twilio.ClientParams{
+		Username: os.Getenv("TWILIO_ACCOUNT_SID"),
+		Password: os.Getenv("TWILIO_AUTH_TOKEN"),
+	})
+}
+
 func SendMessage(to string, body string) error {
-	client := twilio.NewRestClient()
+	client := newTwilioClient()
 	params := &api.CreateMessageParams{}
 
 	params.SetFrom("whatsapp:+14155238886") // Twilio Sandbox number
@@ -59,7 +66,7 @@ func SendMessage(to string, body string) error {
 }
 
 func SendContentTemplate(to string, sid string) error {
-	client := twilio.NewRestClient()
+	client := newTwilioClient()
 
 	params := &api.CreateMessageParams{}
 	params.SetContentSid(sid)

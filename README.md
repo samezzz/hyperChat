@@ -30,6 +30,7 @@ Built with **Go**, powered by **Twilio WhatsApp API**, and deployable to the clo
 
 ## 📂 Project Structure
 
+```bash
 hyperchat/
 ├── cmd/
 │ └── server/
@@ -43,10 +44,7 @@ hyperchat/
 ├── Dockerfile # Container build file
 ├── go.mod # Go modules file
 └── README.md # This file
-
-yaml
-Copy
-Edit
+```
 
 ---
 
@@ -111,7 +109,3 @@ Bot: 1. Follow the DASH diet...
 MIT License © 2025 [Samess]
 
 ---
-
-```
-
-```
