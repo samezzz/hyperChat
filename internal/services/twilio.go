@@ -37,8 +37,8 @@ func cleanNumber(num string) string {
 }
 
 func newTwilioClient() *twilio.RestClient {
-	fmt.Println("TWILIO_ACCOUNT_SID:", os.Getenv("TWILIO_ACCOUNT_SID"))
-	fmt.Println("TWILIO_AUTH_TOKEN:", os.Getenv("TWILIO_AUTH_TOKEN"))
+	fmt.Println("TWILIO_ACCOUNT_SID: ", os.Getenv("TWILIO_ACCOUNT_SID"))
+	fmt.Println("TWILIO_AUTH_TOKEN: ", os.Getenv("TWILIO_AUTH_TOKEN"))
 
 	return twilio.NewRestClientWithParams(twilio.ClientParams{
 		Username: os.Getenv("TWILIO_ACCOUNT_SID"),
