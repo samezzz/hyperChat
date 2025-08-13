@@ -179,7 +179,14 @@ func handleChatbot(from, messageBody string) {
 		return
 	}
 
-	// The response is already plain text from GenerateResponse
+	// Loop prevention: don't send "ready" messages back to the user repeatedly
+	if strings.HasPrefix(strings.ToLower(response), "understood. i'm ready for your question") ||
+		strings.HasPrefix(strings.ToLower(response), "okay, i understand") {
+		log.Println("Skipping setup/intro message to avoid loop.")
+		return
+	}
+
+	// Translate the response based on user preference
 	if response != "" {
 		translatedText, err := gtranslate.TranslateWithParams(response, gtranslate.TranslationParams{
 			From: "auto",
