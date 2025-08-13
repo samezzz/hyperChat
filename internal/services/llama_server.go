@@ -96,6 +96,7 @@ import (
 // }
 
 func GenerateResponse(prompt string) (string, error) {
+	// Prepare request body
 	body := map[string]interface{}{
 		"contents": []map[string]interface{}{
 			{
@@ -111,6 +112,7 @@ func GenerateResponse(prompt string) (string, error) {
 		return "", fmt.Errorf("error marshalling request body: %v", err)
 	}
 
+	// Create request
 	req, err := http.NewRequest(
 		"POST",
 		"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent",
@@ -120,9 +122,11 @@ func GenerateResponse(prompt string) (string, error) {
 		return "", fmt.Errorf("error creating request: %v", err)
 	}
 
+	// Headers
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("X-goog-api-key", "AIzaSyC_rghby79tvP3LpT4CGoOewe5JLK9osuc")
 
+	// Send
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
@@ -135,14 +139,7 @@ func GenerateResponse(prompt string) (string, error) {
 		return "", fmt.Errorf("error reading response body: %v", err)
 	}
 
-	// DEBUG: Print raw API response for troubleshooting
-	fmt.Println("Raw API Response:", string(bodyBytes))
-
-	// If response doesn't look like JSON, return it directly as an error
-	if len(bodyBytes) == 0 || bodyBytes[0] != '{' {
-		return "", fmt.Errorf("API returned non-JSON response: %s", string(bodyBytes))
-	}
-
+	// Struct for extracting only the useful part
 	var responseStruct struct {
 		Candidates []struct {
 			Content struct {
