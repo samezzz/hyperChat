@@ -120,30 +120,55 @@ func handleBloodPressureLogging(from, messageBody string, userState *models.User
 
 // HEALTH TIPS
 func handleHealthTips(from string, userState *models.UserState) {
-	// Generate the chatbot response from the service
-	response, err := services.GenerateResponse("Hey gpt, I want you to provide some health tips to manage hypertension. So if you're to be a medical health practitioner with tons of experience, how would you summarize some health tips that would benefit me if I want to manage hypertension. This is a WhatsApp message so the reader doesn't want any long talk. Don't talk much. Just tell me what's necessary. I really don't want you to generate more than 5 lines. Provide concise, clear, and evidence-based answers about hypertension management. Focus on key points such as diagnosis, lifestyle changes, medications, monitoring, and complications. Keep responses brief and easy to understand.")
+	// Initialize chat history for health tips if empty
+	if len(userState.ChatHistory) == 0 {
+		userState.ChatHistory = []models.ChatMessage{
+			{
+				Role: "system",
+				Content: "Hey gpt, I want you to provide some health tips to manage hypertension. " +
+					"If you're to be a medical health practitioner with tons of experience, " +
+					"how would you summarize some health tips that would benefit me if I want to manage hypertension. " +
+					"This is a WhatsApp message so the reader doesn't want any long talk. Don't talk much. " +
+					"Just tell me what's necessary. I really don't want you to generate more than 5 lines. " +
+					"Provide concise, clear, and evidence-based answers about hypertension management. " +
+					"Focus on key points such as diagnosis, lifestyle changes, medications, monitoring, and complications. " +
+					"Keep responses brief and easy to understand.",
+			},
+		}
+	}
+
+	// Build prompt from chat history
+	var promptBuilder strings.Builder
+	for _, msg := range userState.ChatHistory {
+		promptBuilder.WriteString(fmt.Sprintf("%s: %s\n", msg.Role, msg.Content))
+	}
+	fullPrompt := promptBuilder.String()
+
+	// Generate the response
+	response, err := services.GenerateResponse(fullPrompt)
 	if err != nil {
 		log.Printf("Error generating response: %v", err)
 		services.SendMessage(from, "Sorry, I encountered an error. Please try again.")
 		return
 	}
 
-	// Parse the JSON response to extract only the 'result' field
-	err = json.Unmarshal([]byte(response), &parsedResponse)
-	if err != nil {
-		log.Printf("Error parsing response: %v", err)
-		services.SendMessage(from, "Sorry, I encountered an error while processing the response. Please try again.")
-		return
-	}
+	if response != "" {
+		// Add assistant's reply to history
+		userState.ChatHistory = append(userState.ChatHistory, models.ChatMessage{
+			Role:    "assistant",
+			Content: response,
+		})
 
-	// Send only the 'result' value to the user
-	if parsedResponse.Result != "" {
-		services.SendMessage(from, parsedResponse.Result)
+		// Save updated state
+		repository.SaveUserState(from, userState)
+
+		// Send the response
+		services.SendMessage(from, response)
 	} else {
-		// In case the result field is empty or there's an issue with the response
 		services.SendMessage(from, "I'm sorry, I couldn't generate a response. Please try again.")
 	}
 
+	// Reset state after sending tips (if you want it one-time only)
 	resetUserState(from, userState)
 }
 
