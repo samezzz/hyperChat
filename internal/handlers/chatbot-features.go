@@ -179,8 +179,26 @@ func handleChatbot(from, messageBody string) {
 		return
 	}
 
-	// In the new API, response is plain text, so we don't unmarshal JSON
+	// Try parsing as JSON (new API format)
+	var parsed struct {
+		Candidates []struct {
+			Content struct {
+				Parts []struct {
+					Text string `json:"text"`
+				} `json:"parts"`
+			} `json:"content"`
+		} `json:"candidates"`
+	}
 	parsedResult := strings.TrimSpace(response)
+
+	// If it looks like JSON, try unmarshalling
+	if strings.HasPrefix(parsedResult, "{") {
+		if err := json.Unmarshal([]byte(parsedResult), &parsed); err == nil {
+			if len(parsed.Candidates) > 0 && len(parsed.Candidates[0].Content.Parts) > 0 {
+				parsedResult = parsed.Candidates[0].Content.Parts[0].Text
+			}
+		}
+	}
 
 	// Translate the response based on user preference
 	if parsedResult != "" {
