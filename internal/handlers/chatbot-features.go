@@ -170,29 +170,20 @@ func handleChatbot(from, messageBody string) {
 	}
 
 	// Generate the chatbot response
-	response, err := services.GenerateResponse("Hey gpt, you're a specialist in hypertension management. I have a question for you about hypertension. Don't talk much. Just tell me what's necessary. Provide concise, clear, and evidence-based answers about the question I have for you. Focus on key points such as diagnosis, lifestyle changes, medications, monitorthe question I have for you Keep responses brief and easy to understand. I really don't want you to generate more than 5 lines. Now wait for me to ask my question. Always thing deeply for insights you can share. Your responses should be unique. " + messageBody)
+	response, err := services.GenerateResponse(
+		"Hey gpt, you're a specialist in hypertension management. I have a question for you about hypertension. Don't talk much. Just tell me what's necessary. Provide concise, clear, and evidence-based answers about the question I have for you. Focus on key points such as diagnosis, lifestyle changes, medications, monitorthe question I have for you Keep responses brief and easy to understand. I really don't want you to generate more than 5 lines. Now wait for me to ask my question. Always think deeply for insights you can share. Your responses should be unique. " + messageBody,
+	)
 	if err != nil {
 		log.Printf("Error generating response: %v", err)
 		services.SendMessage(from, "Sorry, I encountered an error. Please try again.")
 		return
 	}
 
-	// Parse the response JSON
-	var parsedResponse struct {
-		Result string `json:"result"`
-	}
-	err = json.Unmarshal([]byte(response), &parsedResponse)
-	if err != nil {
-		log.Printf("Error parsing response: %v", err)
-		services.SendMessage(from, "Sorry, I encountered an error while processing the response. Please try again.")
-		return
-	}
-
-	// Translate the response based on user preference
-	if parsedResponse.Result != "" {
-		translatedText, err := gtranslate.TranslateWithParams(parsedResponse.Result, gtranslate.TranslationParams{
+	// The response is already plain text from GenerateResponse
+	if response != "" {
+		translatedText, err := gtranslate.TranslateWithParams(response, gtranslate.TranslationParams{
 			From: "auto",
-			To:   language, // Use the stored language
+			To:   language,
 		})
 		if err != nil {
 			log.Printf("Translation error: %v", err)
