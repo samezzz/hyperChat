@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 )
 
 // func GenerateResponse(prompt string) (string, error) {
@@ -95,7 +96,6 @@ import (
 // }
 
 func GenerateResponse(prompt string) (string, error) {
-	// Request body for Gemini API
 	body := map[string]interface{}{
 		"contents": []map[string]interface{}{
 			{
@@ -106,13 +106,11 @@ func GenerateResponse(prompt string) (string, error) {
 		},
 	}
 
-	// Marshal the body into JSON
 	jsonBody, err := json.Marshal(body)
 	if err != nil {
 		return "", fmt.Errorf("error marshalling request body: %v", err)
 	}
 
-	// Create the request
 	req, err := http.NewRequest(
 		"POST",
 		"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent",
@@ -122,11 +120,9 @@ func GenerateResponse(prompt string) (string, error) {
 		return "", fmt.Errorf("error creating request: %v", err)
 	}
 
-	// Set headers
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("X-goog-api-key", "AIzaSyC_rghby79tvP3LpT4CGoOewe5JLK9osuc")
 
-	// Send request
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
@@ -134,13 +130,19 @@ func GenerateResponse(prompt string) (string, error) {
 	}
 	defer resp.Body.Close()
 
-	// Read response
 	bodyBytes, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return "", fmt.Errorf("error reading response body: %v", err)
 	}
 
-	// Define a struct to extract only the useful part
+	// DEBUG: Print raw API response for troubleshooting
+	fmt.Println("Raw API Response:", string(bodyBytes))
+
+	// If response doesn't look like JSON, return it directly as an error
+	if len(bodyBytes) == 0 || bodyBytes[0] != '{' {
+		return "", fmt.Errorf("API returned non-JSON response: %s", string(bodyBytes))
+	}
+
 	var responseStruct struct {
 		Candidates []struct {
 			Content struct {
@@ -151,14 +153,12 @@ func GenerateResponse(prompt string) (string, error) {
 		} `json:"candidates"`
 	}
 
-	// Parse JSON
 	if err := json.Unmarshal(bodyBytes, &responseStruct); err != nil {
 		return "", fmt.Errorf("error unmarshalling response: %v", err)
 	}
 
-	// Extract the first text part
 	if len(responseStruct.Candidates) > 0 && len(responseStruct.Candidates[0].Content.Parts) > 0 {
-		return responseStruct.Candidates[0].Content.Parts[0].Text, nil
+		return strings.TrimSpace(responseStruct.Candidates[0].Content.Parts[0].Text), nil
 	}
 
 	return "", fmt.Errorf("no text found in response")
