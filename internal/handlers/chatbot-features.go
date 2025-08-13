@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"encoding/json"
 	"fmt"
 	"log"
 	"strings"
@@ -85,37 +84,67 @@ func selectFeature(from, messageBody string) string {
 // BLOOD PRESSURE LOGGING
 func handleBloodPressureLogging(from, messageBody string, userState *models.UserState) {
 	if userState.BPLogStage == 0 {
+		// Ask for BP reading
 		services.SendMessage(from, "Please enter your blood pressure reading (e.g., 120/80).")
 		userState.BPLogStage = 1
 		repository.SaveUserState(from, userState)
-	} else {
-		// Process the blood pressure reading
-		services.SendMessage(from, "Thank you for logging your blood pressure.")
-		response, err := services.GenerateResponse("Hey gpt, this is my blood pressure reading, " + messageBody + ". I want you to give me a brief advice on what to do with a blood pressure like this. Don't talk much. I really don't want you to generate more than 5 lines. Just give me tips on how to manage blood pressure like this")
-		if err != nil {
-			log.Printf("Error generating response: %v", err)
-			services.SendMessage(from, "Sorry, I encountered an error. Please try again.")
-			return
-		}
-
-		// Parse the JSON response to extract only the 'result' field
-		err = json.Unmarshal([]byte(response), &parsedResponse)
-		if err != nil {
-			log.Printf("Error parsing response: %v", err)
-			services.SendMessage(from, "Sorry, I encountered an error while processing the response. Please try again.")
-			return
-		}
-
-		// Send only the 'result' value to the user
-		if parsedResponse.Result != "" {
-			services.SendMessage(from, parsedResponse.Result)
-		} else {
-			// In case the result field is empty or there's an issue with the response
-			services.SendMessage(from, "I'm sorry, I couldn't generate a response. Please try again.")
-		}
-
-		resetUserState(from, userState)
+		return
 	}
+
+	// Step 2: Provide advice based on BP reading
+	services.SendMessage(from, "Thank you for logging your blood pressure.")
+
+	// Initialize chat history if empty
+	if len(userState.ChatHistory) == 0 {
+		userState.ChatHistory = []models.ChatMessage{
+			{
+				Role: "system",
+				Content: "Hey gpt, you're a hypertension specialist. " +
+					"I will provide a blood pressure reading, and I want you to give brief, concise advice " +
+					"on what someone should do if they have such a reading. " +
+					"Keep it to a maximum of 5 lines. Focus on clear, evidence-based recommendations " +
+					"covering lifestyle adjustments, possible medical actions, and monitoring.",
+			},
+		}
+	}
+
+	// Add the user's BP reading to history
+	userState.ChatHistory = append(userState.ChatHistory, models.ChatMessage{
+		Role:    "user",
+		Content: "My blood pressure reading is " + messageBody,
+	})
+
+	// Build prompt
+	var promptBuilder strings.Builder
+	for _, msg := range userState.ChatHistory {
+		promptBuilder.WriteString(fmt.Sprintf("%s: %s\n", msg.Role, msg.Content))
+	}
+	fullPrompt := promptBuilder.String()
+
+	// Generate response
+	response, err := services.GenerateResponse(fullPrompt)
+	if err != nil {
+		log.Printf("Error generating response: %v", err)
+		services.SendMessage(from, "Sorry, I encountered an error. Please try again.")
+		return
+	}
+
+	if response != "" {
+		// Save assistant's reply
+		userState.ChatHistory = append(userState.ChatHistory, models.ChatMessage{
+			Role:    "assistant",
+			Content: response,
+		})
+		repository.SaveUserState(from, userState)
+
+		// Send advice
+		services.SendMessage(from, response)
+	} else {
+		services.SendMessage(from, "I'm sorry, I couldn't generate a response. Please try again.")
+	}
+
+	// Reset after advice is given
+	resetUserState(from, userState)
 }
 
 // HEALTH TIPS
