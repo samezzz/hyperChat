@@ -163,48 +163,52 @@ func handleChatbot(from, messageBody string) {
 		language = "en"
 	}
 
-	// If user requests the 'menu', reset their state and offer the main menu
+	// Handle "menu" command: reset state
 	if strings.ToLower(messageBody) == "menu" {
 		resetUserState(from, nil)
 		return
 	}
 
-	// Generate the chatbot response
-	response, err := services.GenerateResponse(
-		"Hey gpt, you're a specialist in hypertension management. I have a question for you about hypertension. Don't talk much. Just tell me what's necessary. Provide concise, clear, and evidence-based answers about the question I have for you. Focus on key points such as diagnosis, lifestyle changes, medications, monitorthe question I have for you Keep responses brief and easy to understand. I really don't want you to generate more than 5 lines. Now wait for me to ask my question. Always think deeply for insights you can share. Your responses should be unique. " + messageBody,
-	)
+	// Initialize chat history if empty
+	if len(userState.ChatHistory) == 0 {
+		userState.ChatHistory = []models.ChatMessage{
+			{
+				Role: "system",
+				Content: "Hey gpt, you're a specialist in hypertension management. " +
+					"I have a question for you about hypertension. Don't talk much. " +
+					"Just tell me what's necessary. Provide concise, clear, and evidence-based answers. " +
+					"Focus on key points such as diagnosis, lifestyle changes, medications, and monitoring. " +
+					"Keep responses brief and easy to understand (max 5 lines). Always think deeply for unique insights.",
+			},
+		}
+	}
+
+	// Add user's new message to history
+	userState.ChatHistory = append(userState.ChatHistory, models.ChatMessage{
+		Role:    "user",
+		Content: messageBody,
+	})
+
+	// Build a single prompt string from history
+	var promptBuilder strings.Builder
+	for _, msg := range userState.ChatHistory {
+		promptBuilder.WriteString(fmt.Sprintf("%s: %s\n", msg.Role, msg.Content))
+	}
+	fullPrompt := promptBuilder.String()
+
+	// Generate chatbot response
+	response, err := services.GenerateResponse(fullPrompt)
 	if err != nil {
 		log.Printf("Error generating response: %v", err)
 		services.SendMessage(from, "Sorry, I encountered an error. Please try again.")
 		return
 	}
 
-	// Try parsing as JSON (new API format)
-	var parsed struct {
-		Candidates []struct {
-			Content struct {
-				Parts []struct {
-					Text string `json:"text"`
-				} `json:"parts"`
-			} `json:"content"`
-		} `json:"candidates"`
-	}
-	parsedResult := strings.TrimSpace(response)
-
-	// If it looks like JSON, try unmarshalling
-	if strings.HasPrefix(parsedResult, "{") {
-		if err := json.Unmarshal([]byte(parsedResult), &parsed); err == nil {
-			if len(parsed.Candidates) > 0 && len(parsed.Candidates[0].Content.Parts) > 0 {
-				parsedResult = parsed.Candidates[0].Content.Parts[0].Text
-			}
-		}
-	}
-
-	// Translate the response based on user preference
-	if parsedResult != "" {
-		translatedText, err := gtranslate.TranslateWithParams(parsedResult, gtranslate.TranslationParams{
+	// Translate the response
+	if response != "" {
+		translatedText, err := gtranslate.TranslateWithParams(response, gtranslate.TranslationParams{
 			From: "auto",
-			To:   language, // Use the stored language
+			To:   language,
 		})
 		if err != nil {
 			log.Printf("Translation error: %v", err)
@@ -212,7 +216,16 @@ func handleChatbot(from, messageBody string) {
 			return
 		}
 
-		// Send translated response
+		// Add assistant's reply to history
+		userState.ChatHistory = append(userState.ChatHistory, models.ChatMessage{
+			Role:    "assistant",
+			Content: translatedText,
+		})
+
+		// Save updated state
+		repository.SaveUserState(from, userState)
+
+		// Send the response
 		services.SendMessage(from, translatedText)
 		services.SendMessage(from, "Type 'menu' to return to the main menu or continue chatting.")
 	} else {

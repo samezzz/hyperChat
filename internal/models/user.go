@@ -15,6 +15,15 @@ type UserState struct {
 	CurrentFeature  string
 	BPLogStage      int
 	ReminderStage   int
+
+	// New field for chatbot conversation history
+	ChatHistory []ChatMessage
+}
+
+// ChatMessage stores role/content for multi-turn conversation
+type ChatMessage struct {
+	Role    string `json:"role"`    // "system", "user", "assistant"
+	Content string `json:"content"` // message text
 }
 
 // NewUserState initializes a new user state
@@ -27,5 +36,6 @@ func NewUserState() *UserState {
 		BloodPressure:         "",
 		Medications:           "",
 		PreExistingConditions: "",
+		ChatHistory:           []ChatMessage{},
 	}
 }
