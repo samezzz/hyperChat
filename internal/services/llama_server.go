@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 )
 
@@ -96,52 +95,73 @@ import (
 // }
 
 func GenerateResponse(prompt string) (string, error) {
-	// Define the request body to match the curl request
+	// Request body for Gemini API
 	body := map[string]interface{}{
-		"messages": []map[string]string{
+		"contents": []map[string]interface{}{
 			{
-				"role":    "user",
-				"content": prompt,
+				"parts": []map[string]string{
+					{"text": prompt},
+				},
 			},
 		},
-		"web_access": false, // Add this field to match the curl request
 	}
 
 	// Marshal the body into JSON
 	jsonBody, err := json.Marshal(body)
 	if err != nil {
-		log.Fatalf("Error marshalling request body: %v", err)
+		return "", fmt.Errorf("error marshalling request body: %v", err)
 	}
 
-	// Create a new HTTP request with the correct URL
-	req, err := http.NewRequest("POST", "https://chatgpt-42.p.rapidapi.com/chatgpt", bytes.NewBuffer(jsonBody))
+	// Create the request
+	req, err := http.NewRequest(
+		"POST",
+		"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent",
+		bytes.NewBuffer(jsonBody),
+	)
 	if err != nil {
-		log.Fatalf("Error creating request: %v", err)
+		return "", fmt.Errorf("error creating request: %v", err)
 	}
 
-	// Set the headers to match the curl request
+	// Set headers
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("x-rapidapi-host", "chatgpt-42.p.rapidapi.com")
-	// req.Header.Set("x-rapidapi-key", "ea992e16c5msh521cca4f62eacacp11f229jsn0a18ae384699") // Replace this with your actual API key
-	req.Header.Set("x-rapidapi-key", "e3fe1637e0mshb24301e54891c05p1ab219jsn25766d5046ff") // Replace this with your actual API key
+	req.Header.Set("X-goog-api-key", "AIzaSyC_rghby79tvP3LpT4CGoOewe5JLK9osuc")
 
-	// Create a new HTTP client and send the request
+	// Send request
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Fatalf("Error sending request: %v", err)
+		return "", fmt.Errorf("error sending request: %v", err)
 	}
 	defer resp.Body.Close()
 
-	// Read the response body
+	// Read response
 	bodyBytes, err := io.ReadAll(resp.Body)
 	if err != nil {
-		log.Fatalf("Error reading response body: %v", err)
+		return "", fmt.Errorf("error reading response body: %v", err)
 	}
 
-	// Print and return the response
-	fmt.Println(string(bodyBytes))
-	return string(bodyBytes), nil
+	// Define a struct to extract only the useful part
+	var responseStruct struct {
+		Candidates []struct {
+			Content struct {
+				Parts []struct {
+					Text string `json:"text"`
+				} `json:"parts"`
+			} `json:"content"`
+		} `json:"candidates"`
+	}
+
+	// Parse JSON
+	if err := json.Unmarshal(bodyBytes, &responseStruct); err != nil {
+		return "", fmt.Errorf("error unmarshalling response: %v", err)
+	}
+
+	// Extract the first text part
+	if len(responseStruct.Candidates) > 0 && len(responseStruct.Candidates[0].Content.Parts) > 0 {
+		return responseStruct.Candidates[0].Content.Parts[0].Text, nil
+	}
+
+	return "", fmt.Errorf("no text found in response")
 }
 
 // func GenerateResponse(prompt string) (string, error) {
